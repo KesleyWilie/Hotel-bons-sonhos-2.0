@@ -159,18 +159,10 @@ Com essas configurações o projeto fica pronto para ser executado.
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/TATA255" title="GitHub">
-        <img src="https://avatars.githubusercontent.com/u/119708989?v=4" width="100px;" alt="Foto de Otávio"/><br>
+      <a href="https://github.com/KesleyWilie" title="GitHub">
+        <img src="https://avatars.githubusercontent.com/u/144160126?v=4" width="100px;" alt="Foto de Kesley"/><br>
         <sub>
-          <b>Otávio Estendio</b>
-        </sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/mateuszzinn" title="GitHub">
-        <img src="https://avatars.githubusercontent.com/u/103861262?v=4" width="100px;" alt="Foto de Mateus"/><br>
-        <sub>
-          <b>Mateus Lima</b>
+          <b>Kesley Wilie</b>
         </sub>
       </a>
     </td>
@@ -180,3 +172,146 @@ Com essas configurações o projeto fica pronto para ser executado.
 ---
 
 **Instituto Federal da Paraíba** - Disciplina de **Padrões de Projeto**.
+
+-------------------------------------------------------------------------------------------------
+
+
+
+# CRUD com JPA (Java Persistence API)
+
+## **Métodos Principais para CRUD**
+
+No JPA, usamos os métodos abaixo para realizar operações de **CRUD** (Create, Read, Update, Delete) utilizando o **`EntityManager`**.
+
+---
+
+### **1. Persistência (`persist`)**
+- Usado para **inserir um novo objeto** no banco de dados.
+- Coloca a entidade no estado **"gerenciado"** pelo JPA.
+
+**Exemplo:**
+```java
+Usuario usuario = new Usuario();
+usuario.setCpf("12345678901");
+usuario.setNome("João Medeiros");
+usuario.setEmail("joao@gmail.com");
+usuario.setSenha("12345");
+usuario.setTelefone("987654321");
+usuario.setIsAdmin(false);
+
+em.getTransaction().begin(); // Inicia a transação
+em.persist(usuario);         // Salva no banco
+em.getTransaction().commit(); // Confirma a transação
+```
+
+---
+
+### **2. Atualização (`merge`)**
+- Usado para **atualizar uma entidade existente**.
+- Faz o "merge" dos dados do objeto no estado gerenciado.
+- Caso a entidade não exista no banco, ela será inserida.
+
+**Exemplo:**
+```java
+em.getTransaction().begin();
+Usuario usuario = em.find(Usuario.class, "12345678901"); // Busca o objeto no banco
+usuario.setEmail("novoemail@gmail.com");                // Modifica o valor
+em.merge(usuario);                                      // Atualiza no banco
+em.getTransaction().commit();
+```
+
+---
+
+### **3. Exclusão (`remove`)**
+- Usado para **deletar uma entidade** do banco de dados.
+- O objeto precisa estar no estado **"gerenciado"**.
+
+**Exemplo:**
+```java
+em.getTransaction().begin();
+Usuario usuario = em.find(Usuario.class, "12345678901"); // Busca o objeto no banco
+if (usuario != null) {
+    em.remove(usuario);                                  // Remove do banco
+}
+em.getTransaction().commit();
+```
+
+---
+
+### **4. Consulta (`find`)**
+- Usado para **recuperar uma entidade pelo seu identificador (chave primária)**.
+- Retorna o objeto encontrado ou `null` se não existir.
+
+**Exemplo:**
+```java
+Usuario usuario = em.find(Usuario.class, "12345678901"); // Busca o objeto
+if (usuario != null) {
+    System.out.println(usuario.getNome());
+} else {
+    System.out.println("Usuário não encontrado!");
+}
+```
+
+---
+
+## **CRUD Completo com JPA**
+
+Aqui está um exemplo de implementação completa de um DAO (`UsuarioDAO`) com todas as operações CRUD:
+
+```java
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Persistence;
+
+public class UsuarioDAO {
+    private EntityManager em;
+
+    public UsuarioDAO() {
+        this.em = Persistence.createEntityManagerFactory("HotelBonsSonhosPU").createEntityManager();
+    }
+
+    // Create
+    public void create(Usuario usuario) {
+        em.getTransaction().begin();
+        em.persist(usuario); // Insere novo registro
+        em.getTransaction().commit();
+    }
+
+    // Read
+    public Usuario read(String cpf) {
+        return em.find(Usuario.class, cpf); // Consulta pelo ID
+    }
+
+    // Update
+    public void update(Usuario usuario) {
+        em.getTransaction().begin();
+        em.merge(usuario); // Atualiza o registro
+        em.getTransaction().commit();
+    }
+
+    // Delete
+    public void delete(String cpf) {
+        em.getTransaction().begin();
+        Usuario usuario = em.find(Usuario.class, cpf); // Consulta o registro
+        if (usuario != null) {
+            em.remove(usuario); // Remove o registro
+        }
+        em.getTransaction().commit();
+    }
+}
+```
+
+---
+
+## **Resumo dos Métodos**
+
+| **Operação**   | **Método JPA**      | **Descrição**                                          |
+|-----------------|---------------------|------------------------------------------------------|
+| **Create**      | `persist`           | Insere uma nova entidade no banco.                  |
+| **Read**        | `find`              | Recupera uma entidade pelo identificador.           |
+| **Update**      | `merge`             | Atualiza os dados de uma entidade existente.        |
+| **Delete**      | `remove`            | Remove uma entidade do banco.                       |
+
+---
+
+Com esses métodos, você pode implementar todas as operações de CRUD necessárias em sua aplicação utilizando JPA.
+
