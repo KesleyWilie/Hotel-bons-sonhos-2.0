@@ -1,0 +1,23 @@
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.0">
+    <persistence-unit name="HotelBonsSonhosPU" transaction-type="RESOURCE_LOCAL">
+        <class>com.seuprojeto.entidades.Usuario</class>
+        <class>com.seuprojeto.entidades.Quarto</class>
+        <class>com.seuprojeto.entidades.Reserva</class>
+        
+        <properties>
+            <!-- Configuração do Banco de Dados -->
+            <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/seubanco"/>
+            <property name="jakarta.persistence.jdbc.user" value="usuario"/>
+            <property name="jakarta.persistence.jdbc.password" value="senha"/>
+
+            <!-- Dialeto do Hibernate para MySQL -->
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
+            
+            <!-- Configuração do Hibernate -->
+            <property name="hibernate.show_sql" value="true"/> <!-- Mostra as queries no console -->
+            <property name="hibernate.format_sql" value="true"/> <!-- Formata as queries -->
+            <property name="hibernate.hbm2ddl.auto" value="update"/> <!-- Atualiza o esquema do banco -->
+        </properties>
+    </persistence-unit>
+</persistence>
