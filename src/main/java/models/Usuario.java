@@ -1,23 +1,40 @@
 package models;
-//import jakarta.persistence.*;
 
+import jakarta.persistence.*;
+
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "isAdmin", discriminatorType = DiscriminatorType.INTEGER)
+@Table(name = "usuarios")
 public abstract class Usuario {
+    
+    @Id
+    @Column(name = "CPF")
+    private String cpf;
+
+    @Column(name = "nome")
     private String nome;
+
+    @Column(name = "email")
     private String email;
+
+    @Column(name = "senha")
     private String senha;
+
+    @Column(name = "telefone")
     private String telefone;
-    private String CPF;
-    
+
     public abstract boolean isAdmin();
-    
-    public String getSenha() {
-        return senha;
+
+    // Getters e setters
+
+    public String getCPF() {
+        return cpf;
     }
 
-    public void setSenha(String senha) {
-        this.senha = senha;
+    public void setCPF(String cpf) {
+        this.cpf = cpf;
     }
-
 
     public String getNome() {
         return nome;
@@ -35,6 +52,14 @@ public abstract class Usuario {
         this.email = email;
     }
 
+    public String getSenha() {
+        return senha;
+    }
+
+    public void setSenha(String senha) {
+        this.senha = senha;
+    }
+
     public String getTelefone() {
         return telefone;
     }
@@ -43,40 +68,8 @@ public abstract class Usuario {
         this.telefone = telefone;
     }
 
-    public String getCPF(){
-        return CPF;
+    @Override
+    public String toString() {
+        return this.nome + " " + this.cpf + " " + this.email + " " + this.telefone;
     }
-
-    public void setCPF(String CPF){
-        this.CPF = CPF;
-    }
-    
-   public String toString(){
-        return this.nome + this.CPF + this.email + this.telefone;
-   }
 }
-/*
-@Entity
-@Table(name = "usuarios")
-public class Usuario {
-
-    @Id
-    private String cpf;
-
-    @Column(nullable = false)
-    private String nome;
-
-    @Column(nullable = false, unique = true)
-    private String email;
-
-    @Column(nullable = false)
-    private String senha;
-
-    @Column
-    private String telefone;
-
-    @Column(name = "isAdmin", nullable = false)
-    private boolean isAdmin;
-
-    // get e set da vida
-} */

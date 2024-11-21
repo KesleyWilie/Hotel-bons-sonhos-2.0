@@ -7,12 +7,11 @@ import dto.UsuarioDTO;
 import models.quarto.observer.ClienteObserver;
 import models.quarto.observer.QuartoNovoSubject;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.List;
 
 public class UsuarioController {
     public static UsuarioDTO verificarLogin(UsuarioDTO dto) {
-        ArrayList<UsuarioDTO> usuarios = new UsuarioDAO().listarTodosUsuarios();
+        List<UsuarioDTO> usuarios = new UsuarioDAO().listarTodosUsuarios();
         
         for (UsuarioDTO u : usuarios) {
             if (u.getEmail().equals(dto.getEmail()) && u.getSenha().equals(dto.getSenha())) {
@@ -24,8 +23,8 @@ public class UsuarioController {
 
     public static ClienteDTO cadastrarCliente(ClienteDTO c) {
         try {
-            new UsuarioDAO().cadastrarUsuario(c, false);
-        } catch (SQLException e) {
+            new UsuarioDAO().cadastrarUsuario(c);
+        } catch (Exception e) {
             c = null;
             System.out.println(e.getMessage());
         }
@@ -34,8 +33,8 @@ public class UsuarioController {
 
     public static AdmDTO cadastrarAdmin(AdmDTO a) {
         try {
-            new UsuarioDAO().cadastrarUsuario(a, false);
-        } catch (SQLException e) {
+            new UsuarioDAO().cadastrarUsuario(a);
+        } catch (Exception e) {
             a = null;
             System.out.println(e.getMessage());
         }
@@ -43,7 +42,7 @@ public class UsuarioController {
     }
 
     public static QuartoNovoSubject recuperarOuvintes(){
-        ArrayList<UsuarioDTO> usuarios = new UsuarioDAO().listarUsuarios(true);
+        List<UsuarioDTO> usuarios = new UsuarioDAO().listarUsuarios(true);
         QuartoNovoSubject qns = new QuartoNovoSubject();
         for (UsuarioDTO usuario: usuarios) {
             qns.adicionarObserver(new ClienteObserver(usuario.getEmail()));

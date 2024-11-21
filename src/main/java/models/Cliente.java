@@ -1,9 +1,13 @@
 package models;
 
-public class Cliente extends Usuario{
-    private static final boolean admin = false;
-    
+import jakarta.persistence.*;
+
+@Entity
+@DiscriminatorValue("0") // Valor para diferenciar clientes
+public class Cliente extends Usuario {
+
+    @Override
     public boolean isAdmin() {
-        return admin;
+        return false;
     }
 }

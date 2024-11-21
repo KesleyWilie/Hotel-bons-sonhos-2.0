@@ -1,9 +1,13 @@
 package models;
 
+import jakarta.persistence.*;
+
+@Entity
+@DiscriminatorValue("1") // Valor para diferenciar admins
 public class ADM extends Usuario {
-    private static final boolean admin = true;
-    
+
+    @Override
     public boolean isAdmin() {
-        return admin;
+        return true;
     }
 }
