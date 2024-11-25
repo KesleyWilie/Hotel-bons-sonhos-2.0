@@ -24,6 +24,10 @@ public class UsuarioDTO {
         return isAdmin;
     }
 
+    public void setIsAdmin(boolean isAdmin) {
+        this.isAdmin = isAdmin;
+    }
+
     public String getNome() {
         return nome;
     }

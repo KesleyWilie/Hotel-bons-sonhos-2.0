@@ -41,16 +41,33 @@ public class UsuarioDAO {
         String jpql = "SELECT u FROM Usuario u";
         TypedQuery<Usuario> query = em.createQuery(jpql, Usuario.class);
         List<Usuario> usuarios = query.getResultList();
-
+    
         List<UsuarioDTO> dtos = new ArrayList<>();
         for (Usuario u : usuarios) {
-            UsuarioDTO dto = (u instanceof ADM)
-                    ? Mapper.parseObject(u, AdmDTO.class)
-                    : Mapper.parseObject(u, ClienteDTO.class);
-            dtos.add(dto);
+            if (u.isAdmin()) {
+                // Criando AdmDTO para administradores
+                AdmDTO dto = new AdmDTO();
+                dto.setCPF(u.getCPF());
+                dto.setNome(u.getNome());
+                dto.setEmail(u.getEmail());
+                dto.setSenha(u.getSenha());
+                dto.setTelefone(u.getTelefone());
+                dto.setIsAdmin(true);
+                dtos.add(dto);
+            } else {
+                // Criando ClienteDTO para clientes
+                ClienteDTO dto = new ClienteDTO();
+                dto.setCPF(u.getCPF());
+                dto.setNome(u.getNome());
+                dto.setEmail(u.getEmail());
+                dto.setSenha(u.getSenha());
+                dto.setTelefone(u.getTelefone());
+                dto.setIsAdmin(false);
+                dtos.add(dto);
+            }
         }
         return dtos;
-    }
+    }    
 
     public List<UsuarioDTO> listarUsuarios(boolean apenasClientes) {
         String jpql = apenasClientes
