@@ -1,31 +1,59 @@
 package models.quarto;
 
-import controller.UsuarioController;
+import jakarta.persistence.*;
 import models.quarto.observer.IObserver;
 import models.quarto.observer.QuartoNovoSubject;
-//import jakarta.persistence.*;
 
+
+@Entity
+@Table(name = "quartos")
 public class Quarto {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int codigoQuarto;
-    private int numero;
-    private int andar;
-    private double precoDiaria;
-    private String tipo;
-    private int capacidadeMaxima;
 
-    protected QuartoNovoSubject subject;
+    @Column(nullable = false)
+    private int numero;
+
+    @Column(nullable = false)
+    private String tipo;
+
+    @Column(nullable = false)
+    private int andar;
+
+    @Column(nullable = false, name = "preco_diaria")
+    private double precoDiaria;
+
+    @Column(nullable = false)
+    private int capacidade;
+
+    @Transient
+    private QuartoNovoSubject subject;
 
     public void configurarOuvintes() {
-        this.subject = UsuarioController.recuperarOuvintes();
+        this.subject = new QuartoNovoSubject(); // Inicializa o Subject
         this.subject.notificarObservers();
     }
 
+    public void adicionarObserver(IObserver observer) {
+        if (this.subject != null) {
+            this.subject.adicionarObserver(observer);
+        }
+    }
+
+    public void removerObserver(IObserver observer) {
+        if (this.subject != null) {
+            this.subject.removerObserver(observer);
+        }
+    }
+
+    // Getters e Setters
     public int getCodigoQuarto() {
         return codigoQuarto;
     }
 
-    public void setCodigoQuarto(int id) {
+    public void getCodigoQuarto(int id) {
         this.codigoQuarto = id;
     }
 
@@ -35,6 +63,14 @@ public class Quarto {
 
     public void setNumero(int numero) {
         this.numero = numero;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
     }
 
     public int getAndar() {
@@ -53,29 +89,14 @@ public class Quarto {
         this.precoDiaria = precoDiaria;
     }
 
-    public String getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
-
     public int getCapacidadeMaxima() {
-        return capacidadeMaxima;
+        return capacidade;
     }
 
-    public void setCapacidadeMaxima(int capacidadeMaxima) {
-        this.capacidadeMaxima = capacidadeMaxima;
+    public void setCapacidadeMaxima(int capacidade) {
+        this.capacidade = capacidade;
     }
-
-    public void adicionarObserver(IObserver observer) {
-        this.subject.adicionarObserver(observer);
-    }
-
-    public void removerObserver(IObserver observer) {
-        this.subject.removerObserver(observer);
-    }
+}
     /*
     @Entity
     @Table(name = "quartos")
@@ -102,4 +123,3 @@ public class Quarto {
 
         // Getters e Setters
 } */
-}

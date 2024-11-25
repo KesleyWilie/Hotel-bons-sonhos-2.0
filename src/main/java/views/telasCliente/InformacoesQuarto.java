@@ -5,7 +5,8 @@ import views.ObjetosTelas.Botao;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.JOptionPane;
 
 import java.text.ParseException;
@@ -33,9 +34,7 @@ public class InformacoesQuarto extends JanelaPadrao {
     private String CPFCliente;
     private Botao menu = new Botao(false);
 
-
-    
-    private ArrayList<QuartoDTO> quartos;
+    private List<QuartoDTO> quartos;
     private int indiceAtual = 0;
 
     public InformacoesQuarto(String CPFCliente) {

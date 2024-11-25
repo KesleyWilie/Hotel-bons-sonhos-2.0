@@ -1,34 +1,36 @@
 package controller;
 
-import models.quarto.Quarto;
-import models.quarto.QuartoFactory;
-import models.quarto.Quartos;
 import dao.QuartoDAO;
 import dao.ReservaDAO;
 import dto.QuartoDTO;
+import models.quarto.Quarto;
+import models.quarto.QuartoFactory;
+import models.quarto.Quartos;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class QuartoController {
-
     public static void criarQuarto(int numero, String tipo, int andar, double precoDiaria) {
         
         Quarto quarto = tipoQuartoFactory(numero, tipo, andar, precoDiaria);
 
         // Criando um DTO  com o quarto
         if (quarto != null) {
-            QuartoDTO quartoDTO = new QuartoDTO();
-            quartoDTO.setCodigoQuarto(quarto.getCodigoQuarto());
-            quartoDTO.setNumero(quarto.getNumero());
-            quartoDTO.setAndar(quarto.getAndar());
-            quartoDTO.setPrecoDiaria(quarto.getPrecoDiaria());
-            quartoDTO.setTipo(quarto.getTipo());
-            quartoDTO.setCapacidadeMaxima(quarto.getCapacidadeMaxima());
+            QuartoDTO dto = new QuartoDTO();
+            dto.setCodigoQuarto(quarto.getCodigoQuarto());
+            dto.setNumero(quarto.getNumero());
+            dto.setAndar(quarto.getAndar());
+            dto.setPrecoDiaria(quarto.getPrecoDiaria());
+            dto.setTipo(quarto.getTipo());
+            dto.setCapacidadeMaxima(quarto.getCapacidadeMaxima());
     
             // Salvando o quarto no Banco de Dados
-            QuartoDAO quartoDAO = new QuartoDAO();
-            quartoDAO.cadastrarQuarto(quartoDTO);
-            quarto.configurarOuvintes();
+            try {
+                new QuartoDAO().cadastrarQuarto(dto);
+                quarto.configurarOuvintes();
+            } catch (Exception e) {
+                System.out.println("Erro ao cadastrar o quarto: " + e.getMessage());
+            }
         }
     }
 
@@ -54,21 +56,27 @@ public class QuartoController {
     }
 
     public static String recuperarInfoQuarto(int id){
-        Quarto q = new ReservaDAO().recuperarReserva(id).getQuarto();
-
-        return tipoQuartoFactory(q.getNumero(), q.getTipo(), q.getAndar(), q.getPrecoDiaria()).getDescricaoBasica();
+        try {
+            Quarto q = new ReservaDAO().recuperarReserva(id).getQuarto();
+            return tipoQuartoFactory(q.getNumero(), q.getTipo(), q.getAndar(), q.getPrecoDiaria()).getDescricaoBasica();
+        } catch (Exception e) {
+            return "Erro ao recuperar as informações do quarto: " + e.getMessage();
+        }
     }
 
     public static boolean removerQuarto(int numero, String categoria, int andar) {
-        int id = new QuartoDAO().buscarIdQuarto(numero, categoria, andar);
+        QuartoDAO quartoDAO = new QuartoDAO();
+        int id = quartoDAO.buscarIdQuarto(numero, categoria, andar);
+
         if (id != -1) {
-            new QuartoDAO().removerQuarto(id);
-            return true;
+            String resultado = quartoDAO.removerQuarto(id);
+            System.out.println(resultado);
+            return resultado.contains("sucesso");
         }
         return false;
     }
 
-    public static ArrayList<QuartoDTO> listarQuartos() {
+    public static List<QuartoDTO> listarQuartos() {
         return new QuartoDAO().listarQuartos();
     }
 }

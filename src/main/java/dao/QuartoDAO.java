@@ -2,141 +2,100 @@ package dao;
 
 import dto.QuartoDTO;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import models.quarto.Quarto;
+import utils.mapper.Mapper;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Persistence;
+import jakarta.persistence.TypedQuery;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class QuartoDAO {
-    public void cadastrarQuarto(QuartoDTO quarto){
-        String sql = "INSERT INTO quartos (ID, TIPO, PRECO_DIARIA, NUMERO, ANDAR, CAPACIDADE) VALUES (?,?,?,?,?,?)";
-        PreparedStatement ps = null;
+    private EntityManager em;
 
-        try {
-            ps = SingletonConnection.getCon().prepareStatement(sql);
-            ps.setString(1, String.valueOf(quarto.getCodigoQuarto()));
-            ps.setString(2, quarto.getTipo());
-            ps.setString(3, String.valueOf(quarto.getPrecoDiaria()));
-            ps.setString(4, String.valueOf(quarto.getNumero()));
-            ps.setString(5, String.valueOf(quarto.getAndar()));
-            ps.setInt(6, quarto.getCapacidadeMaxima());
-
-            ps.execute();
-            ps.close();
-            System.out.println("Quarto cadastrado com sucesso");
-        } catch(SQLException e){
-            e.printStackTrace();
-        }
+    public QuartoDAO() {
+        this.em = Persistence.createEntityManagerFactory("HotelBonsSonhosPU").createEntityManager();
     }
 
-    public ArrayList<QuartoDTO> listarQuartos() {
-        String sql = "SELECT id, tipo, preco_diaria, numero, andar, capacidade FROM quartos";
-        ArrayList<QuartoDTO> quartos = new ArrayList<>();
+    public void cadastrarQuarto(QuartoDTO dto) {
+        Quarto entity = Mapper.parseObject(dto, Quarto.class);
 
-        try (Connection con = SingletonConnection.getCon();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        em.getTransaction().begin();
+        em.persist(entity);
+        em.getTransaction().commit();
 
-            while (rs.next()) {
-                QuartoDTO quarto = new QuartoDTO();
-                quarto.setCodigoQuarto(rs.getInt("id"));
-                quarto.setTipo(rs.getString("tipo"));
-                quarto.setPrecoDiaria(rs.getDouble("preco_diaria"));
-                quarto.setNumero(rs.getInt("numero"));
-                quarto.setAndar(rs.getInt("andar"));
-                quarto.setCapacidadeMaxima(rs.getInt("capacidade"));
-               
-                quartos.add(quarto);
-            }
+        System.out.println("Quarto cadastrado com sucesso.");
+    }
 
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public List<QuartoDTO> listarQuartos() {
+        String jpql = "SELECT q FROM Quarto q";
+        TypedQuery<Quarto> query = em.createQuery(jpql, Quarto.class);
+        List<Quarto> quartos = query.getResultList();
+
+        List<QuartoDTO> dtos = new ArrayList<>();
+        for (Quarto quarto : quartos) {
+            QuartoDTO dto = Mapper.parseObject(quarto, QuartoDTO.class);
+            dtos.add(dto);
         }
-
-        return quartos;
+        return dtos;
     }
 
     public QuartoDTO recuperarQuarto(int id) {
-        String sql = "SELECT id, tipo, preco_diaria, numero, andar, capacidade FROM quartos WHERE id = ?";
-        QuartoDTO quarto = null;
-    
-        try (PreparedStatement ps = SingletonConnection.getCon().prepareStatement(sql)) {
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
-            
-            if (rs.next()) { 
-                quarto = new QuartoDTO();
-                quarto.setCodigoQuarto(rs.getInt("id"));
-                quarto.setTipo(rs.getString("tipo"));
-                quarto.setPrecoDiaria(rs.getDouble("preco_diaria"));
-                quarto.setNumero(rs.getInt("numero"));
-                quarto.setAndar(rs.getInt("andar"));
-                quarto.setCapacidadeMaxima(rs.getInt("capacidade"));
-            }
-    
-        } catch(SQLException e){
-            e.printStackTrace();
+        Quarto quarto = em.find(Quarto.class, id);
+        if (quarto == null) {
+            return null;
         }
-    
-        return quarto;
+        return Mapper.parseObject(quarto, QuartoDTO.class);
     }
 
-    public boolean atualizarQuarto(QuartoDTO quarto) {
-        String sql = "UPDATE quartos SET tipo = ?, preco_diaria = ?, numero = ?, andar = ?, capacidade = ? WHERE id = ?";
-    
-        try (PreparedStatement ps = SingletonConnection.getCon().prepareStatement(sql)) {
-            ps.setString(1, quarto.getTipo());
-            ps.setDouble(2, quarto.getPrecoDiaria());
-            ps.setInt(3, quarto.getNumero());
-            ps.setInt(4, quarto.getAndar());
-            ps.setInt(5, quarto.getCapacidadeMaxima());
-            ps.setInt(6, quarto.getCodigoQuarto());
-            
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    
-        return false;
+    public boolean atualizarQuarto(QuartoDTO dto) {
+        Quarto entity = Mapper.parseObject(dto, Quarto.class);
+
+        em.getTransaction().begin();
+        em.merge(entity);
+        em.getTransaction().commit();
+
+        return true;
     }
 
     public int buscarIdQuarto(int numero, String categoria, int andar) {
-        String sql = "SELECT id FROM quartos WHERE numero = ? AND tipo = ? AND andar = ?";
-        try (Connection con = SingletonConnection.getCon();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, numero);
-            ps.setString(2, categoria);
-            ps.setInt(3, andar);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getInt("id");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        String jpql = "SELECT q.id FROM Quarto q WHERE q.numero = :numero AND q.tipo = :tipo AND q.andar = :andar";
+        TypedQuery<Integer> query = em.createQuery(jpql, Integer.class);
+        query.setParameter("numero", numero);
+        query.setParameter("categoria", categoria);
+        query.setParameter("andar", andar);
+
+        try {
+            return query.getSingleResult();
+        } catch (Exception e) {
+            return -1; // Retorna -1 caso não encontre o quarto
         }
-        return -1; 
     }    
 
-    public void removerQuarto(int id) {
-        String checkSql = "SELECT COUNT(*) FROM reservas WHERE id_quarto = ?";
-        String deleteSql = "DELETE FROM quartos WHERE id = ?";
-        
-        try (PreparedStatement checkPs = SingletonConnection.getCon().prepareStatement(checkSql)) {
-            checkPs.setInt(1, id);
-            ResultSet rs = checkPs.executeQuery();
-            if (rs.next() && rs.getInt(1) == 0) {
-                try (PreparedStatement deletePs = SingletonConnection.getCon().prepareStatement(deleteSql)) {
-                    deletePs.setInt(1, id);
-                    deletePs.executeUpdate();
-                    System.out.println("Quarto removido com sucesso");
-                }
-            } else {
-                System.out.println("Não é possível remover o quarto, pois existem reservas associadas.");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public String removerQuarto(int id) {
+        em.getTransaction().begin();
+        Quarto quarto = em.find(Quarto.class, id);
+
+        if (quarto == null) {
+            em.getTransaction().rollback();
+            return "Quarto não encontrado.";
         }
+
+        // Verifica se há reservas associadas
+        String jpqlCheck = "SELECT COUNT(r) FROM Reserva r WHERE r.quarto.id = :id";
+        TypedQuery<Long> checkQuery = em.createQuery(jpqlCheck, Long.class);
+        checkQuery.setParameter("id", id);
+
+        long reservasAssociadas = checkQuery.getSingleResult();
+        if (reservasAssociadas > 0) {
+            em.getTransaction().rollback();
+            return "Não é possível remover o quarto, pois existem reservas associadas.";
+        }
+
+        em.remove(quarto);
+        em.getTransaction().commit();
+        return "Quarto removido com sucesso.";
     }
 }
