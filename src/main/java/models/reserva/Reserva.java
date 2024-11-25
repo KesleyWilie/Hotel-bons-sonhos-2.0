@@ -22,9 +22,8 @@ public class Reserva implements Prototype {
     @JoinColumn(name = "id_cliente", referencedColumnName = "CPF") // Relacionamento com Cliente (FK)
     private Cliente cliente;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_quarto", referencedColumnName = "id") // Alterado para referenciar a coluna correta
-    
+    @ManyToOne
+    @JoinColumn(name = "id_quarto", referencedColumnName = "id")
     private Quarto quarto;
 
     @Column(name = "data_checkin", nullable = false)

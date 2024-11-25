@@ -82,10 +82,9 @@ public class InformacoesQuarto extends JanelaPadrao {
         
                         if(ReservaController.consultarDisponibilidade(quartos.get(indiceAtual), checkinDate, checkoutDate)) {
                             
-                            double precoTotal = ReservaController.reservarQuarto(quartos.get(indiceAtual), CPFCliente, checkinDate, checkoutDate);
+                            double precoTotal = ReservaController.reservarQuarto(quartos.get(indiceAtual), CPFCliente, checkinDate, checkoutDate);                
                             
-                            
-                            JOptionPane.showMessageDialog(null, "Reserva realizada! Preço total: R$ " + precoTotal);
+                            JOptionPane.showMessageDialog(null, "Reserva realizada! Preço total: R$ " + String.format("%.2f", precoTotal));
                         } else {
                             JOptionPane.showMessageDialog(null, "Quarto indisponível, porém, enviaremos um e-mail quando novos quartos forem adicionados!", "Quarto indisponível", JOptionPane.INFORMATION_MESSAGE);
                             return;

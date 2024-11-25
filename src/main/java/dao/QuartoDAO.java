@@ -60,13 +60,13 @@ public class QuartoDAO {
         return true;
     }
 
-    public int buscarIdQuarto(int numero, String categoria, int andar) {
+    public int buscarIdQuarto(int numero, String tipo, int andar) {
         String jpql = "SELECT q.id FROM Quarto q WHERE q.numero = :numero AND q.tipo = :tipo AND q.andar = :andar";
         TypedQuery<Integer> query = em.createQuery(jpql, Integer.class);
         query.setParameter("numero", numero);
-        query.setParameter("categoria", categoria);
+        query.setParameter("tipo", tipo); // Ajustado para 'tipo'
         query.setParameter("andar", andar);
-
+    
         try {
             return query.getSingleResult();
         } catch (Exception e) {
