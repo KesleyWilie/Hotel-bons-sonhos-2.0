@@ -4,8 +4,6 @@ import models.Cliente;
 import models.quarto.Quarto;
 import utils.mapper.Mapper;
 
-import java.sql.Date;
-
 import dto.ClienteDTO;
 import dto.QuartoDTO;
 
@@ -32,13 +30,13 @@ public class ReservaBuilder {
         return this;
     }
 
-    public ReservaBuilder setDataCheckin(Date data){
-        instancia.setDataCheckin(data);
+    public ReservaBuilder setDataCheckin(java.util.Date dataCheckin){
+        instancia.setDataCheckin(dataCheckin);
         return this;
     }
 
-    public ReservaBuilder setDataCheckout(Date data) {
-        instancia.setDataCheckout(data);
+    public ReservaBuilder setDataCheckout(java.util.Date dataCheckout) {
+        instancia.setDataCheckout(dataCheckout);
         return this;
     }
 

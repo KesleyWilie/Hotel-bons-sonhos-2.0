@@ -11,7 +11,7 @@ public class Quarto {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int codigoQuarto;
+    private int id;
 
     @Column(nullable = false)
     private int numero;
@@ -26,7 +26,7 @@ public class Quarto {
     private double precoDiaria;
 
     @Column(nullable = false)
-    private int capacidade;
+    private Integer capacidade;
 
     @Transient
     private QuartoNovoSubject subject;
@@ -49,12 +49,12 @@ public class Quarto {
     }
 
     // Getters e Setters
-    public int getCodigoQuarto() {
-        return codigoQuarto;
+    public int getId() {
+        return id;
     }
 
     public void getCodigoQuarto(int id) {
-        this.codigoQuarto = id;
+        this.id = id;
     }
 
     public int getNumero() {
@@ -97,29 +97,3 @@ public class Quarto {
         this.capacidade = capacidade;
     }
 }
-    /*
-    @Entity
-    @Table(name = "quartos")
-    public class Quarto {
-
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private int id;
-
-        @Column(nullable = false)
-        private String tipo;
-
-        @Column(name = "preco_diaria", nullable = false)
-        private double precoDiaria;
-
-        @Column(nullable = false)
-        private int numero;
-
-        @Column(nullable = false)
-        private int andar;
-
-        @Column
-        private int capacidade;
-
-        // Getters e Setters
-} */

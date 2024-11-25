@@ -1,7 +1,7 @@
 package views.telasCliente;
 
 import controller.UsuarioController;
-import dto.ReservaDTO;
+import models.reserva.Reserva;
 import views.JanelaPadrao;
 import views.ObjetosTelas.Botao;
 
@@ -15,7 +15,6 @@ import views.ObjetosTelas.EspacoTexto;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import java.util.List;
 
 public class VisualizarReservas extends JanelaPadrao {
@@ -67,7 +66,7 @@ public class VisualizarReservas extends JanelaPadrao {
     }
 
     public void tabela() {
-        List<ReservaDTO> reservas = ReservaController.resgatarReservasDeClientes(CPF);
+        List<Reserva> reservas = ReservaController.resgatarReservasDeClientes(CPF);
         modelo  = new DefaultTableModel();
         modelo.addColumn("ID reserva");
         modelo.addColumn("Tipo de quarto");
@@ -75,7 +74,7 @@ public class VisualizarReservas extends JanelaPadrao {
         modelo.addColumn("Checkout");
         modelo.addColumn("Preço Total");
 
-        for(ReservaDTO reserva: reservas) {
+        for(Reserva reserva: reservas) {
             Object[] linha = new Object[5];
             linha[0] = reserva.getId();
             linha[1] = reserva.getQuarto().getTipo();

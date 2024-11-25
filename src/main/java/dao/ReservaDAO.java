@@ -1,106 +1,77 @@
 package dao;
 
-import dto.ReservaDTO;
-import models.reserva.Reserva;
-import utils.mapper.Mapper;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
-import java.util.ArrayList;
+import models.reserva.Reserva;
+
 import java.util.List;
 
 public class ReservaDAO {
+
     private EntityManager em;
 
     public ReservaDAO() {
         this.em = Persistence.createEntityManagerFactory("HotelBonsSonhosPU").createEntityManager();
     }
 
-    public void cadastrarReserva(ReservaDTO dto){
-        Reserva entity = Mapper.parseObject(dto, Reserva.class);
-
+    // Método para cadastrar uma reserva
+    public void cadastrarReserva(Reserva reserva) {
         em.getTransaction().begin();
-        em.persist(entity);
+        em.persist(reserva);
         em.getTransaction().commit();
-
-        System.out.println("Reserva cadastrada com sucesso.");
+        System.out.println("Reserva cadastrada com sucesso: " + reserva);
     }
 
-    public List<ReservaDTO> listarReservas() {
-        String jpql = "SELECT r FROM Reserva r";
-        TypedQuery<Reserva> query = em.createQuery(jpql, Reserva.class);
-        List<Reserva> reservas = query.getResultList();
+    // Método para listar todas as reservas
+    public List<Reserva> listarReservas() {
+        TypedQuery<Reserva> query = em.createQuery("SELECT r FROM Reserva r", Reserva.class);
+        return query.getResultList();
+    }
 
-        List<ReservaDTO> dtos = new ArrayList<>();
-        for (Reserva reserva : reservas) {
-            ReservaDTO dto = Mapper.parseObject(reserva, ReservaDTO.class);
-            dtos.add(dto);
-        }
-        return dtos;
-    }    
+    // Método para buscar uma reserva pelo ID
+    public Reserva recuperarReserva(int id) {
+        return em.find(Reserva.class, id);
+    }
 
-    public List<ReservaDTO> listarReservasPorQuarto(int codigoQuarto) {
-        String jpql = "SELECT r FROM Reserva r WHERE r.quarto.codigo = :codigoQuarto";
-        TypedQuery<Reserva> query = em.createQuery(jpql, Reserva.class);
+    // Método para listar reservas por quarto
+    public List<Reserva> listarReservasPorQuarto(int codigoQuarto) {
+        TypedQuery<Reserva> query = em.createQuery(
+            "SELECT r FROM Reserva r WHERE r.quarto.codigoQuarto = :codigoQuarto", 
+            Reserva.class
+        );
         query.setParameter("codigoQuarto", codigoQuarto);
-        List<Reserva> reservas = query.getResultList();
-
-        List<ReservaDTO> dtos = new ArrayList<>();
-        for (Reserva reserva : reservas) {
-            ReservaDTO dto = Mapper.parseObject(reserva, ReservaDTO.class);
-            dtos.add(dto);
-        }
-        return dtos;
+        return query.getResultList();
     }
 
-    public List<ReservaDTO> listarReservasPorCliente(String cpf) {
-        String jpql = "SELECT r FROM Reserva r WHERE r.cliente.cpf = :cpf";
-        TypedQuery<Reserva> query = em.createQuery(jpql, Reserva.class);
+    // Método para listar reservas por cliente
+    public List<Reserva> listarReservasPorCliente(String cpf) {
+        TypedQuery<Reserva> query = em.createQuery(
+            "SELECT r FROM Reserva r WHERE r.cliente.cpf = :cpf", 
+            Reserva.class
+        );
         query.setParameter("cpf", cpf);
-        List<Reserva> reservas = query.getResultList();
-
-        List<ReservaDTO> dtos = new ArrayList<>();
-        for (Reserva reserva : reservas) {
-            ReservaDTO dto = Mapper.parseObject(reserva, ReservaDTO.class);
-            dtos.add(dto);
-        }
-        return dtos;
+        return query.getResultList();
     }
 
-    public ReservaDTO recuperarReserva(int id) {
-        Reserva reserva = em.find(Reserva.class, id);
-        if (reserva == null) {
-            return null;
-        }
-        return Mapper.parseObject(reserva, ReservaDTO.class);
-    }
-
-    public boolean atualizarReserva(ReservaDTO dto) {
-        Reserva entity = Mapper.parseObject(dto, Reserva.class);
-
+    // Método para atualizar uma reserva
+    public boolean atualizarReserva(Reserva reserva) {
         em.getTransaction().begin();
-        em.merge(entity);
+        Reserva updated = em.merge(reserva);
         em.getTransaction().commit();
-
-        return true;
+        return updated != null;
     }
-    
-    public String removerReserva(int id) {
+
+    // Método para remover uma reserva pelo ID
+    public void removerReserva(int id) {
         em.getTransaction().begin();
         Reserva reserva = em.find(Reserva.class, id);
-
-        if (reserva == null) {
-            em.getTransaction().rollback();
-            return "Reserva não encontrada.";
+        if (reserva != null) {
+            em.remove(reserva);
+            System.out.println("Reserva removida com sucesso: " + reserva);
+        } else {
+            System.out.println("Reserva não encontrada com ID: " + id);
         }
-
-        em.remove(reserva);
         em.getTransaction().commit();
-        return "Reserva removida com sucesso.";
     }
-
-    public EntityManager getEntityManager() {
-        return this.em;
-    } 
 }

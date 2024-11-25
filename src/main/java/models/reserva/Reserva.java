@@ -1,33 +1,38 @@
 package models.reserva;
 
 import jakarta.persistence.*;
-import models.Usuario;
+import models.Cliente;
 import models.quarto.Quarto;
+import utils.mapper.Mapper;
 
 import java.util.Date;
 
+import dto.ClienteDTO;
+import dto.QuartoDTO;
+
 @Entity
 @Table(name = "reservas")
-public class Reserva implements Prototype{
+public class Reserva implements Prototype {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Geração automática de ID
     private int id;
 
-    @ManyToOne
-    @JoinColumn(name = "id_cliente", nullable = false)
-    private Usuario cliente;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_cliente", referencedColumnName = "CPF") // Relacionamento com Cliente (FK)
+    private Cliente cliente;
 
-    @ManyToOne
-    @JoinColumn(name = "id_quarto", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_quarto", referencedColumnName = "id") // Alterado para referenciar a coluna correta
+    
     private Quarto quarto;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "data_checkin", nullable = false)
+    @Temporal(TemporalType.DATE)
     private Date dataCheckin;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "data_checkout", nullable = false)
+    @Temporal(TemporalType.DATE)
     private Date dataCheckout;
 
     @Column(name = "preco_total", nullable = false)
@@ -42,11 +47,11 @@ public class Reserva implements Prototype{
         this.id = id;
     }
 
-    public Usuario getCliente() {
+    public Cliente getCliente() {
         return cliente;
     }
 
-    public void setCliente(Usuario cliente) {
+    public void setCliente(Cliente cliente) {
         this.cliente = cliente;
     }
 
@@ -83,43 +88,24 @@ public class Reserva implements Prototype{
     }
 
     @Override
+    public String toString() {
+        return "Reserva{" +
+                "id=" + id +
+                ", cliente=" + cliente +
+                ", quarto=" + quarto +
+                ", dataCheckin=" + dataCheckin +
+                ", dataCheckout=" + dataCheckout +
+                ", precoTotal=" + precoTotal +
+                '}';
+    }
+
     public Reserva clone() {
-        Reserva reservaClonada = new Reserva();
-        reservaClonada.setCliente(this.cliente); // Mantém a referência, ajuste se necessário
-        reservaClonada.setQuarto(this.quarto);   // Mantém a referência, ajuste se necessário
-        reservaClonada.setDataCheckin(this.dataCheckin);
-        reservaClonada.setDataCheckout(this.dataCheckout);
-        reservaClonada.setPrecoTotal(this.precoTotal);
-        return reservaClonada;
+        return new ReservaBuilder()
+        .setCliente(Mapper.parseObject(this.getCliente(), ClienteDTO.class))
+        .setQuarto(Mapper.parseObject(this.getQuarto(), QuartoDTO.class))
+        .setDataCheckin(this.dataCheckin)
+        .setDataCheckout(this.dataCheckout)
+        .setPrecoTotal(this.getPrecoTotal())
+        .builder();
     }
 }
-    /*
-@Entity
-@Table(name = "reservas")
-public class Reserva {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
-    @ManyToOne
-    @JoinColumn(name = "id_cliente", nullable = false)
-    private Usuario cliente;
-
-    @ManyToOne
-    @JoinColumn(name = "id_quarto", nullable = false)
-    private Quarto quarto;
-
-    @Temporal(TemporalType.DATE)
-    @Column(name = "data_checkin", nullable = false)
-    private Date dataCheckin;
-
-    @Temporal(TemporalType.DATE)
-    @Column(name = "data_checkout", nullable = false)
-    private Date dataCheckout;
-
-    @Column(name = "preco_total", nullable = false)
-    private double precoTotal;
-
-    // gets e set da vida
-} */

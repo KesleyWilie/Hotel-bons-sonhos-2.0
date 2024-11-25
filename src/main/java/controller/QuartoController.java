@@ -17,7 +17,7 @@ public class QuartoController {
         // Criando um DTO  com o quarto
         if (quarto != null) {
             QuartoDTO dto = new QuartoDTO();
-            dto.setCodigoQuarto(quarto.getCodigoQuarto());
+            dto.setCodigoQuarto(quarto.getId());
             dto.setNumero(quarto.getNumero());
             dto.setAndar(quarto.getAndar());
             dto.setPrecoDiaria(quarto.getPrecoDiaria());
