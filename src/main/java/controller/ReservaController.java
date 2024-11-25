@@ -1,14 +1,11 @@
 package controller;
 
 import java.sql.Date;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Random;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Random;
 
-import dao.QuartoDAO;
 import dao.ReservaDAO;
 import dto.ClienteDTO;
 import dto.QuartoDTO;
@@ -18,135 +15,147 @@ import models.reserva.ReservaBuilder;
 import models.strategy.*;
 import utils.mapper.Mapper;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
+
 public class ReservaController {
 
+    // Método para reservar um quarto
     public static double reservarQuarto(QuartoDTO quarto, String cpf, Date checkin, Date checkout) {
-        // Obtendo a data atual.
-        Calendar hoje = Calendar.getInstance();
-        hoje.set(Calendar.HOUR_OF_DAY, 0);
-        hoje.set(Calendar.MINUTE, 0);
-        hoje.set(Calendar.SECOND, 0);
-        hoje.set(Calendar.MILLISECOND, 0);
-    
-        Calendar checkinCalendar = Calendar.getInstance();
-        checkinCalendar.setTime(checkin);
-    
-        // Verificar se a data de check-in é anterior à data atual
-        if (checkinCalendar.before(hoje)) {
-            throw new IllegalArgumentException("Não é possível reservar para uma data anterior à data atual.");
+        // Validação de datas
+        if (!validarDatas(checkin, checkout)) {
+            throw new IllegalArgumentException("Datas de check-in ou check-out inválidas.");
         }
-    
+
+        // Consultar quantidade de reservas anteriores
         int quantReservas = consultarReservasAnteriores(cpf);
-    
-        IEstrategiaDePrecos estrategiaPreco;
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(checkin);
-    
-        int mesCheckin = calendar.get(Calendar.MONTH) + 1;
-    
-        if (quantReservas > 10) {
-            estrategiaPreco = new EstrategiaPrecoClienteFiel();
-        } 
-        // Se for julho ou dezembro, o preço aumenta pela demanda
-        else if (mesCheckin == 7 || mesCheckin == 12) {
-            estrategiaPreco = new EstrategiaPrecoSazonal();
-        } 
-        // Março é aniversário do hotel então tem promoção
-        else if (mesCheckin == 3) {
-            estrategiaPreco = new EstrategiaPrecoPromo();
-        } else {
-            estrategiaPreco = null;
+
+        // Determinar a estratégia de preços baseada na quantidade de reservas e data
+        IEstrategiaDePrecos estrategiaPreco = determinarEstrategiaDePreco(checkin, quantReservas);
+
+        // Calcular o número de noites e o preço total
+        long numeroDeNoites = ChronoUnit.DAYS.between(checkin.toLocalDate(), checkout.toLocalDate());
+        double precoTotal = calcularPreco(quarto.getPrecoDiaria(), estrategiaPreco, (int) numeroDeNoites, quantReservas);
+
+        // Criar a reserva
+        ReservaBuilder builder = criarReservaBuilder(quarto, cpf, checkin, checkout, precoTotal);
+
+        // Salvar a reserva no banco de dados usando JPA
+        ReservaDAO reservaDAO = new ReservaDAO();
+        EntityManager em = reservaDAO.getEntityManager();
+        EntityTransaction transaction = em.getTransaction();
+        try {
+            transaction.begin();
+            em.persist(builder.builder()); // Persiste a reserva
+            transaction.commit();
+        } catch (Exception e) {
+            transaction.rollback();
+            throw new RuntimeException("Erro ao salvar a reserva", e);
         }
-    
-        
-        LocalDate dataCheckin = checkin.toLocalDate();
-        LocalDate dataCheckout = checkout.toLocalDate();
-    
-        // Calcular o número de noites, diferença em dias entre checkin e checkout.
-        long numeroDeNoites = ChronoUnit.DAYS.between(dataCheckin, dataCheckout);
-    
-        if (numeroDeNoites <= 0) {
-            throw new IllegalArgumentException("A data de check-out deve ser posterior à data de check-in.");
-        }
-    
-        double precoTotal;
-    
-        // Se nenhuma estratégia for usada será o preço integral da diária
-        if (estrategiaPreco != null) {
-            precoTotal = estrategiaPreco.calcularPreco(quarto.getPrecoDiaria(), (int) numeroDeNoites, quantReservas);
-        } else {
-            precoTotal = quarto.getPrecoDiaria() * numeroDeNoites;
-        }
-    
-        // Verifica se existe algum protótipo de reserva
-        Reserva reserva = consultarReservaPrototype(quarto, cpf);
-    
-        ReservaBuilder builder = new ReservaBuilder().setId(new Random().nextInt(10000))
-                                                        .setDataCheckin(checkin)
-                                                        .setDataCheckout(checkout)
-                                                        .setPrecoTotal(precoTotal)
-                                                        .setQuarto(quarto);
-    
-        if (reserva == null) {
-            ClienteDTO cliente = Mapper.parseObject(UsuarioController.resgatarCliente(cpf), ClienteDTO.class);
-            builder.setCliente(cliente);
-        } else {
-            builder.setCliente(Mapper.parseObject(reserva.getCliente(), ClienteDTO.class));
-        }
-    
-        new ReservaDAO().cadastrarReserva(Mapper.parseObject(builder.builder(), ReservaDTO.class));
     
         return precoTotal;
     }
-    
 
+    // Valida a data de check-in e check-out
+    private static boolean validarDatas(Date checkin, Date checkout) {
+        LocalDate dataAtual = LocalDate.now();
+        LocalDate dataCheckin = checkin.toLocalDate();
+        LocalDate dataCheckout = checkout.toLocalDate();
+
+        return !dataCheckin.isBefore(dataAtual) && dataCheckin.isBefore(dataCheckout);
+    }
+
+    // Determina a estratégia de preços
+    private static IEstrategiaDePrecos determinarEstrategiaDePreco(Date checkin, int quantReservas) {
+        int mesCheckin = checkin.toLocalDate().getMonthValue();
+        if (quantReservas > 10) {
+            return new EstrategiaPrecoClienteFiel();
+        } else if (mesCheckin == 7 || mesCheckin == 12) {
+            return new EstrategiaPrecoSazonal();
+        } else if (mesCheckin == 3) {
+            return new EstrategiaPrecoPromo();
+        }
+        return null;
+    }
+
+    // Calcula o preço total da reserva
+    private static double calcularPreco(double precoDiaria, IEstrategiaDePrecos estrategia, int noites, int quantReservas) {
+        return (estrategia != null) ? estrategia.calcularPreco(precoDiaria, noites, quantReservas) : precoDiaria * noites;
+    }
+
+    // Cria o builder para a reserva
+    private static ReservaBuilder criarReservaBuilder(QuartoDTO quarto, String cpf, Date checkin, Date checkout, double precoTotal) {
+        ReservaBuilder builder = new ReservaBuilder()
+                .setId(new Random().nextInt(10000))
+                .setDataCheckin(checkin)
+                .setDataCheckout(checkout)
+                .setPrecoTotal(precoTotal)
+                .setQuarto(quarto);
+
+        ClienteDTO cliente = (ClienteDTO) UsuarioController.resgatarCliente(cpf);
+        if (cliente != null) {
+            builder.setCliente(cliente);
+        } else {
+            throw new IllegalArgumentException("Cliente não encontrado para CPF informado.");
+        }
+
+        return builder;
+    }
+
+    // Consulta uma reserva prototype
     public static Reserva consultarReservaPrototype(QuartoDTO quarto, String cpf) {
-        ArrayList<ReservaDTO> reservas = new ReservaDAO().listarReservas();
-        
-        for (ReservaDTO reserva : reservas) {
-            if (reserva.getCliente().getCPF().equals(cpf)) {     
-                Reserva r = Mapper.parseObject(reserva, Reserva.class);
-                return r.clone();
+        ReservaDAO reservaDAO = new ReservaDAO();//
+        EntityManager em = reservaDAO.getEntityManager();
+        List<Reserva> reservas = em.createQuery("SELECT r FROM Reserva r WHERE r.cliente.cpf = :cpf", Reserva.class)
+                .setParameter("cpf", cpf)
+                .getResultList();
+
+        for (Reserva reserva : reservas) {
+            if (reserva.getCliente().getCPF().equals(cpf)) {
+                return reserva.clone(); // Retorna uma cópia da reserva
             }
         }
         return null;
     }
 
+    // Consulta o número de reservas anteriores feitas por um cliente
     public static int consultarReservasAnteriores(String cpf) {
-        ArrayList<ReservaDTO> reservas = new ReservaDAO().listarReservas();
-        int quantidade = 0;
-        
-        for (ReservaDTO reserva : reservas) {
-            if (reserva.getCliente().getCPF().equals(cpf)) {
-                quantidade++;
-            }
-        }
-
-        return quantidade;
+        ReservaDAO reservaDAO = new ReservaDAO();
+        EntityManager em = reservaDAO.getEntityManager();
+        long count = (long) em.createQuery("SELECT COUNT(r) FROM Reserva r WHERE r.cliente.cpf = :cpf")
+                .setParameter("cpf", cpf)
+                .getSingleResult();
+        return (int) count;
     }
 
-    public static ArrayList<ReservaDTO> resgatarReservasDeClientes(String cpf) {
-        ArrayList<ReservaDTO> reservas = new ReservaDAO().listarReservasPorCliente(cpf);
+    // Resgata todas as reservas feitas por um cliente
+    public static List<ReservaDTO> resgatarReservasDeClientes(String cpf) {
+        ReservaDAO reservaDAO = new ReservaDAO();
+        EntityManager em = reservaDAO.getEntityManager();
+        List<Reserva> reservas = em.createQuery("SELECT r FROM Reserva r WHERE r.cliente.cpf = :cpf", Reserva.class)
+                .setParameter("cpf", cpf)
+                .getResultList();
 
-        return reservas;
+        return Mapper.parseListObjects(reservas, ReservaDTO.class);
     }
 
+    // Consulta a disponibilidade de um quarto para as datas fornecidas
     public static boolean consultarDisponibilidade(QuartoDTO quarto, Date dataCheckin, Date dataCheckout) {
         ReservaDAO reservaDAO = new ReservaDAO();
+        EntityManager em = reservaDAO.getEntityManager();
+        List<Reserva> reservas = em.createQuery("SELECT r FROM Reserva r WHERE r.quarto.id = :idQuarto", Reserva.class)
+                .setParameter("idQuarto", quarto.getCodigoQuarto())
+                .getResultList();
 
-        int idQuarto = new QuartoDAO().buscarIdQuarto(quarto.getNumero(), quarto.getTipo(), quarto.getAndar());
-        List<ReservaDTO> reservas = reservaDAO.listarReservasPorQuarto(idQuarto);
-
-        for (ReservaDTO reserva : reservas) {
-            Date checkinExistente = new Date(reserva.getDataCheckin().getTime());
-            Date checkoutExistente = new Date(reserva.getDataCheckout().getTime());
+        for (Reserva reserva : reservas) {
+            Date checkinExistente = (Date) reserva.getDataCheckin();
+            Date checkoutExistente = (Date) reserva.getDataCheckout();
 
             if ((dataCheckin.before(checkoutExistente) && dataCheckout.after(checkinExistente)) ||
                 (dataCheckin.equals(checkinExistente) || dataCheckout.equals(checkoutExistente))) {
-                return false; 
+                return false; // O quarto está indisponível
             }
         }
-
-        return true; 
+        return true; // O quarto está disponível
     }
 }

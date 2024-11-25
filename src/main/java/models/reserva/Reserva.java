@@ -1,24 +1,39 @@
 package models.reserva;
 
-import java.sql.Date;
-
-import dto.ClienteDTO;
-import dto.QuartoDTO;
-import models.Cliente;
+import jakarta.persistence.*;
+import models.Usuario;
 import models.quarto.Quarto;
-import utils.mapper.Mapper;
-//import jakarta.persistence.*;
 
+import java.util.Date;
 
+@Entity
+@Table(name = "reservas")
 public class Reserva implements Prototype{
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private Cliente cliente;
+
+    @ManyToOne
+    @JoinColumn(name = "id_cliente", nullable = false)
+    private Usuario cliente;
+
+    @ManyToOne
+    @JoinColumn(name = "id_quarto", nullable = false)
     private Quarto quarto;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "data_checkin", nullable = false)
     private Date dataCheckin;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "data_checkout", nullable = false)
     private Date dataCheckout;
+
+    @Column(name = "preco_total", nullable = false)
     private double precoTotal;
 
+    // Getters e Setters
     public int getId() {
         return id;
     }
@@ -27,11 +42,11 @@ public class Reserva implements Prototype{
         this.id = id;
     }
 
-    public Cliente getCliente() {
+    public Usuario getCliente() {
         return cliente;
     }
 
-    public void setCliente(Cliente cliente) {
+    public void setCliente(Usuario cliente) {
         this.cliente = cliente;
     }
 
@@ -59,17 +74,6 @@ public class Reserva implements Prototype{
         this.dataCheckout = dataCheckout;
     }
 
-    @Override
-    public String toString() {
-        return "Reserva{" +
-                "id=" + id +
-                ", cliente=" + cliente +
-                ", quarto=" + quarto +
-                ", dataCheckin=" + dataCheckin +
-                ", dataCheckout=" + dataCheckout +
-                '}';
-    }
-
     public double getPrecoTotal() {
         return precoTotal;
     }
@@ -78,15 +82,17 @@ public class Reserva implements Prototype{
         this.precoTotal = precoTotal;
     }
 
+    @Override
     public Reserva clone() {
-        return new ReservaBuilder()
-        .setCliente(Mapper.parseObject(this.getCliente(), ClienteDTO.class))
-        .setQuarto(Mapper.parseObject(this.getQuarto(), QuartoDTO.class))
-        .setDataCheckin(this.dataCheckin)
-        .setDataCheckout(this.dataCheckout)
-        .setPrecoTotal(this.getPrecoTotal())
-        .builder();
+        Reserva reservaClonada = new Reserva();
+        reservaClonada.setCliente(this.cliente); // Mantém a referência, ajuste se necessário
+        reservaClonada.setQuarto(this.quarto);   // Mantém a referência, ajuste se necessário
+        reservaClonada.setDataCheckin(this.dataCheckin);
+        reservaClonada.setDataCheckout(this.dataCheckout);
+        reservaClonada.setPrecoTotal(this.precoTotal);
+        return reservaClonada;
     }
+}
     /*
 @Entity
 @Table(name = "reservas")
@@ -117,4 +123,3 @@ public class Reserva {
 
     // gets e set da vida
 } */
-}

@@ -15,7 +15,8 @@ import views.ObjetosTelas.EspacoTexto;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+
+import java.util.List;
 
 public class VisualizarReservas extends JanelaPadrao {
     private String CPF;
@@ -66,7 +67,7 @@ public class VisualizarReservas extends JanelaPadrao {
     }
 
     public void tabela() {
-        ArrayList<ReservaDTO> reservas = ReservaController.resgatarReservasDeClientes(CPF);
+        List<ReservaDTO> reservas = ReservaController.resgatarReservasDeClientes(CPF);
         modelo  = new DefaultTableModel();
         modelo.addColumn("ID reserva");
         modelo.addColumn("Tipo de quarto");
